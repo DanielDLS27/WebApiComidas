@@ -9,9 +9,11 @@ namespace WebApiComidas.Controllers
     public class RestaurantesController: ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
-        public RestaurantesController (ApplicationDbContext context)
+        private readonly ILogger<RestaurantesController> log;
+        public RestaurantesController (ApplicationDbContext context, ILogger<RestaurantesController> log)
         {
             this.dbContext = context;
+            this.log = log;
         }
 
         [HttpGet]

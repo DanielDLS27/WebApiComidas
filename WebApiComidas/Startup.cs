@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
+using WebApiComidas.Services;
 
 namespace WebApiComidas
 {
@@ -21,6 +22,11 @@ namespace WebApiComidas
             services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("defaultConnection")));
 
+            services.AddTransient<IService, ServiceA>();
+            services.AddScoped<ServiceScoped>();
+            services.AddSingleton<ServiceSingleton>();
+            services.AddTransient<ServiceTransient>();
+
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(c =>
             {
@@ -28,8 +34,55 @@ namespace WebApiComidas
             });
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
+            //app.Use(async (context, siguiente) =>
+            //{
+            //using (var ms = new MemoryStream())
+            //{
+            //    //se asinga el body del responde en una variable y se le da el valor de memorystream
+            //    var bodyoriginal = context.Response.Body;
+            //    context.Response.Body = ms;
+
+            //    //permite continuar con la linea
+            //    await siguiente(context);
+
+            //    //guardamos lo que le respondemos al cliente en el string
+            //    ms.Seek(0, SeekOrigin.Begin);
+            //    string response = new StreamReader(ms).ReadToEnd();
+            //    ms.Seek(0, SeekOrigin.Begin);
+
+            //    //leemos el stream y lo colocamos como estaba
+            //    await ms.CopyToAsync(bodyoriginal);
+            //    context.Response.Body = bodyoriginal;
+
+            //    logger.LogInformation(response);
+
+            //}
+            //});
+            ////////////////////
+            //* Marca Error
+            //app.UseMiddleware<ResponseHttpMiddleware>();
+            //app.UseResponseHttpMiddleware();
+            //*
+            ////////////////////
+            //Se ejecuta la pagina web solamente mostrando el mensaje
+            //app.Run(async context =>
+            //{
+            //    await context.Response.WriteAsync("Interceptar peticiones");
+            //}
+            //);
+
+            //De esta manera el mensaje solo se muestra en la ruta especificada
+            //app.Map("/ruta1", app =>
+            //{
+            //    app.Run(async context =>
+            //    {
+            //        await context.Response.WriteAsync("Interceptar peticiones");
+            //    });
+            //});
+
+
             // Configure the HTTP request pipeline.
             if (env.IsDevelopment())
             {

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiComidas.Entidades;
+using WebApiComidas.Services;
 
 namespace WebApiComidas.Controllers
 {
@@ -9,10 +10,36 @@ namespace WebApiComidas.Controllers
     public class ComidasController: ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
+        private readonly IService service;
+        private readonly ServiceTransient serviceTransient;
+        private readonly ServiceScoped serviceScoped;
+        private readonly ServiceSingleton serviceSingleton;
+        private readonly ILogger<ComidasController> logger;
 
-        public ComidasController(ApplicationDbContext context)
+        public ComidasController(ApplicationDbContext context, IService service,
+            ServiceTransient serviceTransient, ServiceScoped serviceScoped,
+            ServiceSingleton serviceSingleton, ILogger<ComidasController> logger)
         {
             this.dbContext = context;
+            this.service = service;
+            this.serviceTransient = serviceTransient;
+            this.serviceScoped = serviceScoped;
+            this.serviceSingleton = serviceSingleton;
+            this.logger = logger;
+        }
+
+        [HttpGet("GUID")]
+        public ActionResult ObtenerGuid()
+        {
+            return Ok(new
+            {
+                ComidasControllerTransient = serviceTransient.guid,
+                ServiceA_Transient = service.GetTransient(),
+                ComidasControllerScoped = serviceScoped.guid,
+                ServiceA_Scoped = service.GetScoped(),
+                ComidasControllerSingleton = serviceSingleton.guid,
+                ServiceA_Singleton = service.GetSingleton()
+            });
         }
 
         [HttpGet] // api/comidas
@@ -20,6 +47,16 @@ namespace WebApiComidas.Controllers
         [HttpGet("/listado")] // listado
         public async Task<ActionResult<List<Comida>>> Get()
         {
+            // * Niveles de logs
+            // Critical
+            // Error
+            // Warning
+            // Information - Configuration actual
+            // Debug
+            // Trace
+            logger.LogInformation("Se obtiene el listado de comidas");
+            logger.LogWarning("Se obtiene el listado de comidas!");
+            service.ejecutarJob();
             return await dbContext.Comidas.Include(x => x.restaurantes).ToListAsync();
         }
 
@@ -48,6 +85,7 @@ namespace WebApiComidas.Controllers
 
             if (comida == null)
             {
+                logger.LogError("No se encuentra la comida. ");
                 return NotFound();
             }
             return comida;
@@ -56,6 +94,13 @@ namespace WebApiComidas.Controllers
         [HttpPost]
         public async Task<ActionResult> Post([FromBody] Comida comida)
         {
+            var existeLibroMismotitulo = await dbContext.Comidas.AnyAsync(x => x.Nombre == comida.Nombre);
+
+            if (existeLibroMismotitulo)
+            {
+                return BadRequest("Ya existe una comida con el mismo nombre");
+            }
+
             dbContext.Add(comida);
             await dbContext.SaveChangesAsync();
             return Ok();
