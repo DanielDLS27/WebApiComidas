@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiComidas.Entidades;
+using WebApiComidas.Filtros;
 using WebApiComidas.Services;
 
 namespace WebApiComidas.Controllers
 {
     [ApiController]
     [Route("api/comidas")] // api/comidas
+    //[Authorize]
     public class ComidasController: ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
@@ -29,8 +32,11 @@ namespace WebApiComidas.Controllers
         }
 
         [HttpGet("GUID")]
+        [ResponseCache(Duration = 10)]
+        [ServiceFilter(typeof(FiltroDeAccion))]
         public ActionResult ObtenerGuid()
         {
+            logger.LogInformation("Durante la ejecucion");
             return Ok(new
             {
                 ComidasControllerTransient = serviceTransient.guid,
@@ -45,6 +51,8 @@ namespace WebApiComidas.Controllers
         [HttpGet] // api/comidas
         [HttpGet("listado")] // api/comidas/listado
         [HttpGet("/listado")] // listado
+        //[ResponseCache(Duration =15)]
+        //[Authorize]
         public async Task<ActionResult<List<Comida>>> Get()
         {
             // * Niveles de logs
@@ -54,6 +62,7 @@ namespace WebApiComidas.Controllers
             // Information - Configuration actual
             // Debug
             // Trace
+            throw new NotImplementedException();
             logger.LogInformation("Se obtiene el listado de comidas");
             logger.LogWarning("Se obtiene el listado de comidas!");
             service.ejecutarJob();
